@@ -1,0 +1,13 @@
+# Normalize line endings to LF in the repository.
+# Git will convert to CRLF on Windows checkout if core.autocrlf=true,
+# but the repo always stores LF — keeps diffs clean across platforms.
+* text=auto eol=lf
+
+# Binaries — never touch
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary

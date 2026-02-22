@@ -1,0 +1,38 @@
+# Dependencies — rebuilt inside Docker
+# Use ** to exclude nested node_modules (e.g. apps/api/node_modules, packages/types/node_modules)
+# so host Windows symlinks don't overwrite the Linux ones created by pnpm install inside Docker.
+**/node_modules
+**/.pnpm-store
+
+# Build outputs — rebuilt inside Docker
+dist/
+.next/
+out/
+
+# Git
+.git/
+.gitignore
+
+# Environment secrets — never bake into image
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dev-only files
+docker-compose.yml
+deploy.sh
+nginx/
+
+# NOTE: prisma/migrations/ is intentionally NOT excluded — required for migrate deploy
