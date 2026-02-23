@@ -1,6 +1,27 @@
 import type { FastifyPluginAsync } from "fastify";
 
 export const userRoutes: FastifyPluginAsync = async (app) => {
+  // GET /api/users/search?q=<query>&limit=<n> — search users by username
+  app.get<{ Querystring: { q?: string; limit?: string } }>(
+    "/search",
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const q = (req.query.q ?? "").trim();
+      const limit = Math.min(Number(req.query.limit ?? 10), 20);
+
+      if (!q) return reply.send({ data: [] });
+
+      const users = await app.prisma.user.findMany({
+        where: { username: { contains: q, mode: "insensitive" } },
+        select: { id: true, username: true, avatarUrl: true },
+        take: limit,
+        orderBy: { username: "asc" },
+      });
+
+      return reply.send({ data: users });
+    }
+  );
+
   // GET /api/users/:username — public profile (still requires auth — login wall)
   app.get<{ Params: { username: string } }>(
     "/:username",
@@ -199,6 +220,27 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
         nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null,
         hasMore,
       });
+    }
+  );
+
+  // PUT /api/users/me/public-key — upload E2E public key for the current user
+  app.put<{ Body: { publicKey: string } }>(
+    "/me/public-key",
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { publicKey } = req.body ?? {};
+      if (!publicKey?.trim()) {
+        return reply.code(400).send({
+          error: "BadRequest",
+          message: "publicKey is required",
+          statusCode: 400,
+        });
+      }
+      await app.prisma.user.update({
+        where: { id: req.user.sub },
+        data: { publicKey: publicKey.trim() },
+      });
+      return reply.send({ data: null });
     }
   );
 

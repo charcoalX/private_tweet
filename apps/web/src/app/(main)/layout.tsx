@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { getCurrentUser, serverFetch } from "@/lib/server-api";
 import { SignOutButton } from "@/components/SignOutButton";
+import { MessagesUnreadBadge } from "@/components/MessagesUnreadBadge";
+import { E2EInitializer } from "@/components/E2EInitializer";
 
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const currentUser = await getCurrentUser();
@@ -38,6 +40,16 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                 {currentUser.username}
               </Link>
             )}
+            {/* Messages icon */}
+            <Link
+              href="/messages"
+              className="relative text-slate-400 hover:text-slate-100"
+              title="Messages"
+            >
+              <span className="text-lg leading-none">✉️</span>
+              <MessagesUnreadBadge />
+            </Link>
+
             {/* Notification bell */}
             <Link
               href="/notifications"
@@ -69,6 +81,9 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
         {children}
       </main>
+
+      {/* Silently generate E2E keys on every page so they're ready before Messages is opened */}
+      {currentUser && <E2EInitializer meId={currentUser.sub} />}
     </div>
   );
 }

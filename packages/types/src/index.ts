@@ -6,6 +6,7 @@ export interface User {
   email: string;
   bio: string | null;
   avatarUrl: string | null;
+  publicKey: string | null; // RSA-OAEP public key (SPKI, base64) — null until user visits Messages
   createdAt: string; // ISO 8601
 }
 
@@ -64,6 +65,34 @@ export interface InviteCode {
   usedAt: string | null;
   expiresAt: string | null;
 }
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  readAt: string | null;
+  createdAt: string;
+  sender?: Pick<User, "id" | "username" | "avatarUrl">;
+}
+
+export interface Conversation {
+  id: string;
+  participant1Id: string;
+  participant2Id: string;
+  createdAt: string;
+  updatedAt: string;
+  // The other participant (relative to the requesting user)
+  otherUser: Pick<User, "id" | "username" | "avatarUrl" | "publicKey">;
+  lastMessage: Message | null;
+  unreadCount: number;
+}
+
+// ─── WebSocket events ─────────────────────────────────────────────────────────
+
+export type WsEvent =
+  | { type: "new_message"; conversationId: string; message: Message }
+  | { type: "messages_read"; conversationId: string };
 
 // ─── API envelope types ───────────────────────────────────────────────────────
 

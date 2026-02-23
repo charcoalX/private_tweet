@@ -107,6 +107,13 @@ export const api = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
 
+  put: <T>(path: string, body?: unknown, init?: RequestInit) =>
+    request<T>(path, {
+      ...init,
+      method: "PUT",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+
   delete: <T>(path: string, init?: RequestInit) =>
     request<T>(path, { ...init, method: "DELETE" }),
 };
