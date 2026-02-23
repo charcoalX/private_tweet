@@ -4,6 +4,29 @@
 
 ---
 
+## 功能概述
+
+| 功能 | 说明 |
+|------|------|
+| 邀请码注册 / 登录 | 仅凭有效邀请码注册，管理员在后台生成码 |
+| 发帖 / 回复 / 转发 | 文字帖（240 字）、回复串、带留言转发 |
+| **编辑帖子和回复** | 作者可内联编辑内容，修改后显示 *Edited* 标签 |
+| **删除帖子和回复** | 软删除，操作前弹出确认 Modal |
+| 点赞 | 实时计数，重复点击取消 |
+| 关注 / 取关 | 关注关系驱动 Feed |
+| 关注时间线（Feed） | 基于 Redis Sorted Set 的 fanout-on-write，无限滚动加载 |
+| **无限滚动** | Feed / 个人主页均采用 IntersectionObserver 自动加载下一页 |
+| **图片上传** | 通过 MinIO presigned URL 直传，最多 4 张，自动展示九宫格 |
+| **私信（DM）** | 会话列表 + 实时消息（WebSocket），未读红点 |
+| **端到端加密** | Web Crypto API（RSA-OAEP + AES-256-GCM），私钥仅存 localStorage |
+| **搜索** | 帖子内容 + 用户名 / 简介模糊匹配（ILIKE），关键字高亮 |
+| 通知 | 点赞、回复、关注、转发均触发站内通知，导航栏红点 |
+| 登录墙 | 所有页面 / API 强制认证，未登录自动跳转 `/login` |
+| robots.txt + noindex | 全站屏蔽搜索引擎抓取 |
+| 管理员后台 | 用户管理（升降权限）、邀请码管理 |
+
+---
+
 ## 目录
 
 1. [项目结构说明](#1-项目结构说明)
@@ -280,13 +303,33 @@ cd private_tweet
 | `POSTGRES_USER` | `tweet` | PostgreSQL 数据库用户名，保持默认即可 |
 | `POSTGRES_PASSWORD` | *(强密码)* | PostgreSQL 密码，**必须修改**，建议 24 位以上随机字符 |
 | `POSTGRES_DB` | `private_tweet` | 数据库名，保持默认即可 |
-| `REDIS_PASSWORD` | *(强密码)* | Redis 认证密码，**必须修改**，Nginx 限速和 feed 缓存都依赖此连接 |
-| `MINIO_ROOT_USER` | `minioadmin` | MinIO 管理员账号，可保持默认 |
-| `MINIO_ROOT_PASSWORD` | *(强密码)* | MinIO 管理员密码，**必须修改**（当前媒体上传功能未启用，但容器已启动） |
+| `REDIS_PASSWORD` | *(强密码)* | Redis 认证密码，**必须修改**，Nginx 限速和 Feed 缓存都依赖此连接 |
+| `MINIO_ROOT_USER` | `minioadmin` | MinIO 管理员账号（同时作为 Access Key），可保持默认 |
+| `MINIO_ROOT_PASSWORD` | *(强密码)* | MinIO 管理员密码（同时作为 Secret Key），**必须修改**，最短 8 位 |
+| `MINIO_BUCKET` | `tweets` | 存储图片的 Bucket 名称，默认 `tweets`；**API 容器启动时若 Bucket 不存在会自动创建并设置公开读策略**，无需手动创建 |
 | `JWT_SECRET` | *(hex 64 chars)* | JWT 签名密钥，用 `openssl rand -hex 32` 生成，**泄露后所有登录 token 作废** |
 | `JWT_ACCESS_EXPIRY` | `15m` | Access Token 有效期，默认 15 分钟，过短影响体验，过长降低安全性 |
 | `JWT_REFRESH_EXPIRY` | `7d` | Refresh Token 有效期，默认 7 天，控制"多久需要重新登录" |
 | `WEB_URL` | `http://1.2.3.4` | 服务器对外访问地址，**不含末尾斜杠**，用于 CORS 配置和 Cookie 作用域。有域名填域名，没有填 IP |
+
+**MinIO 与 API 容器的连接说明**：
+
+`docker-compose.prod.yml` 中的 API 服务需要以下额外环境变量才能连接 MinIO。请在 `api` 服务的 `environment` 块中追加：
+
+```yaml
+# docker-compose.prod.yml → services.api.environment
+MINIO_ENDPOINT: minio            # Docker 内网服务名，固定值
+MINIO_PORT: "9000"
+MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+MINIO_BUCKET: ${MINIO_BUCKET:-tweets}
+```
+
+同时在 `.env.production` 中添加：
+
+```env
+MINIO_BUCKET=tweets
+```
 
 **注意**：
 - `DATABASE_URL` 和 `REDIS_URL` **不需要**手动填写，`docker-compose.prod.yml` 会自动由上面的变量拼接
@@ -464,6 +507,12 @@ curl -I http://你的服务器IP/api/health | grep -i robots
 - [ ] 关注另一用户，Feed 更新
 - [ ] 点赞正常
 - [ ] 通知页面有消息
+- [ ] **编辑帖子**：点击帖子右上角 `···` → Edit，修改内容后 Save，帖子显示 *Edited* 标签
+- [ ] **删除帖子**：点击 `···` → Delete，确认弹窗后帖子从列表移除
+- [ ] **图片上传**：发帖时点击图片按钮，上传 1-4 张图片，发布后图片正常展示
+- [ ] **搜索功能**：导航栏输入关键词回车，Posts 和 Users 两个 tab 均有结果，关键词高亮显示
+- [ ] **私信发送**：打开 Messages 页面，选择一个用户发起会话，发送消息后对方实时收到
+- [ ] **端到端加密**：私信会话顶部显示 "End-to-end encrypted" 标志（需双方都打开过 Messages 页面）
 
 ---
 
@@ -577,6 +626,112 @@ Next.js 生产模式下静态资源有 1 年缓存（`immutable`）。浏览器�
 ```bash
 $COMPOSE restart nginx
 ```
+
+---
+
+### 图片上传失败 / MinIO Bucket 未自动创建
+
+API 启动时会自动连接 MinIO 并创建 Bucket（`storage.ts` 插件）。如果图片上传报错，按以下步骤排查：
+
+**1. 确认 API 容器有 MinIO 环境变量**
+
+```bash
+$COMPOSE exec api env | grep MINIO
+# 应输出 MINIO_ENDPOINT=minio、MINIO_ACCESS_KEY=... 等
+```
+
+如果没有输出，说明 `docker-compose.prod.yml` 中 API 服务缺少 MinIO 变量（见[第 4 节](#4-环境变量说明)中的配置说明）。添加后重新 build 并启动：
+
+```bash
+$COMPOSE build api
+$COMPOSE up -d api
+```
+
+**2. 手动创建 Bucket（应急方案）**
+
+如果自动创建失败，可以进入 MinIO 容器手动创建：
+
+```bash
+# 进入 MinIO 容器
+$COMPOSE exec minio sh
+
+# 使用 mc 客户端（MinIO 内置）
+mc alias set local http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+mc mb local/tweets
+mc anonymous set public local/tweets
+exit
+```
+
+**3. 确认 MinIO 容器健康**
+
+```bash
+$COMPOSE ps minio
+# STATUS 应为 healthy
+
+$COMPOSE logs --tail=30 minio
+```
+
+---
+
+### WebSocket 连接失败 / 私信实时功能不工作
+
+私信功能依赖 WebSocket 连接到后端 API（路径 `/ws`，非 `/api/ws`）。生产环境需要额外配置：
+
+**症状**：Messages 页面打开后无法实时收发消息，或 DevTools → Network 中 WebSocket 连接报 `101` 失败。
+
+**原因**：浏览器端 `NEXT_PUBLIC_WS_URL` 未配置，默认指向 `ws://localhost:4000`（本地开发地址），在生产环境无效。
+
+**修复步骤**：
+
+1. 在 `nginx/nginx.conf` 的 `server` 块中为 `/ws` 添加专用 WebSocket 代理（放在 `/api/` location 之前）：
+
+```nginx
+# WebSocket 升级 — 必须在 /api/ 之前，因为 /api/ 会清除 Connection 头
+location /ws {
+    proxy_pass         http://api:3001;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade    $http_upgrade;
+    proxy_set_header   Connection "upgrade";
+    proxy_set_header   Host       $host;
+    proxy_read_timeout 86400s;   # 长连接，不要超时断开
+}
+```
+
+2. 在 `docker-compose.prod.yml` 的 `web` 服务中把 WS URL 作为构建参数和运行时变量传入：
+
+```yaml
+# services.web.build.args
+NEXT_PUBLIC_WS_URL: ws://${WEB_URL_HOST}   # 见下方说明
+
+# services.web.environment
+NEXT_PUBLIC_WS_URL: ws://${WEB_URL_HOST}
+```
+
+> `WEB_URL_HOST` 只需要主机名部分（不含 `http://`）。如果 `WEB_URL=http://1.2.3.4`，则填 `1.2.3.4`。
+
+3. 重新构建并部署：
+
+```bash
+$COMPOSE build web
+$COMPOSE up -d
+```
+
+**验证**：打开 DevTools → Network → WS，刷新 Messages 页面，应看到 `/ws` 连接状态为 `101 Switching Protocols`。
+
+---
+
+### 私信显示 "Encryption unavailable" / 端到端加密不生效
+
+**症状**：发送私信时提示 "Recipient hasn't set up E2E encryption yet"，或会话顶部显示 "Encryption unavailable"。
+
+**原因**：E2E 加密使用 Web Crypto API，**密钥对在浏览器端生成并存储在 localStorage**，公钥上传到服务器。如果对方从未打开过 Messages 页面，其公钥尚未上传，加密无法完成。
+
+**解决方法**：
+
+1. 让**接收方**先打开一次 Messages 页面（`/messages`）。页面加载时会自动在后台生成密钥对并上传公钥，这一过程静默完成，无需任何操作。
+2. 之后刷新发送方的 Messages 页面，会话顶部应变为 "End-to-end encrypted"。
+
+> **注意**：E2E 加密的私钥仅保存在用户本地浏览器的 localStorage 中。若用户**换设备**或**清除浏览器数据**，历史加密消息将无法解密（这是端对端加密的固有限制，不是 Bug）。
 
 ---
 

@@ -17,6 +17,7 @@ import { adminRoutes } from "./routes/admin.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { uploadRoutes } from "./routes/uploads.js";
 import { messageRoutes } from "./routes/messages.js";
+import { searchRoutes } from "./routes/search.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -71,6 +72,7 @@ export async function buildApp() {
   await app.register(notificationRoutes, { prefix: "/api/notifications" });
   await app.register(uploadRoutes, { prefix: "/api/uploads" });
   await app.register(messageRoutes, { prefix: "/api/messages" });
+  await app.register(searchRoutes, { prefix: "/api/search" });
 
   return app;
 }
