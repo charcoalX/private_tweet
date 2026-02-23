@@ -4,6 +4,7 @@ import { getCurrentUser, serverFetch } from "@/lib/server-api";
 import { SignOutButton } from "@/components/SignOutButton";
 import { MessagesUnreadBadge } from "@/components/MessagesUnreadBadge";
 import { E2EInitializer } from "@/components/E2EInitializer";
+import { SearchBox } from "@/components/SearchBox";
 
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const currentUser = await getCurrentUser();
@@ -26,6 +27,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
           </Link>
 
           <div className="flex items-center gap-4 text-sm">
+            <SearchBox />
             <Link
               href="/feed"
               className="text-slate-400 hover:text-slate-100 font-medium"

@@ -18,6 +18,8 @@ export interface Post {
   replyToId: string | null;
   repostOfId: string | null;
   createdAt: string;
+  updatedAt?: string;
+  isEdited?: boolean;
   deletedAt: string | null;
   // Aggregates optionally joined
   likeCount?: number;

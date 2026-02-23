@@ -8,6 +8,7 @@ import type { Post } from "@private-tweet/types";
 import { LikeButton } from "@/components/LikeButton";
 import { RepostButton } from "@/components/RepostButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Highlight } from "@/lib/highlight";
 
 interface PostDetailResponse {
   data: Post & { replies: Post[] };
@@ -48,9 +49,52 @@ function ReplyCard({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Edit state
+  const [displayContent, setDisplayContent] = useState(reply.content);
+  const [displayIsEdited, setDisplayIsEdited] = useState(reply.isEdited ?? false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const canDelete =
     Boolean(currentUserId) &&
     (reply.userId === currentUserId || currentUserRole === "ADMIN");
+  const canEdit = Boolean(currentUserId) && reply.userId === currentUserId;
+
+  function startEdit() {
+    setEditDraft(displayContent);
+    setMenuOpen(false);
+    setIsEditing(true);
+  }
+
+  function cancelEdit() {
+    setIsEditing(false);
+    setEditDraft("");
+    setSaveError(null);
+  }
+
+  async function saveEdit() {
+    const trimmed = editDraft.trim();
+    if (!trimmed) return;
+    if (trimmed === displayContent) { cancelEdit(); return; }
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const res = await api.patch<{ data: { content: string; isEdited: boolean } }>(
+        `/api/posts/${reply.id}`,
+        { content: trimmed }
+      );
+      setDisplayContent(res.data.content);
+      setDisplayIsEdited(res.data.isEdited);
+      setIsEditing(false);
+      setEditDraft("");
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Failed to save");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   function toggleCompose() {
     if (composeOpen) {
@@ -132,9 +176,42 @@ function ReplyCard({
           <span className="text-sm font-semibold text-slate-100">{rUser}</span>
           <span className="text-xs text-slate-400">{timeAgo(reply.createdAt)}</span>
         </div>
-        <p className="text-sm text-slate-200 mt-0.5 whitespace-pre-wrap leading-relaxed">
-          {reply.content}
-        </p>
+
+        {isEditing ? (
+          <div className="mt-1 space-y-2">
+            <textarea
+              value={editDraft}
+              onChange={(e) => setEditDraft(e.target.value)}
+              maxLength={240}
+              rows={2}
+              className="w-full text-sm bg-surface-900 border border-surface-700 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 resize-none"
+              autoFocus
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">{editDraft.length}/240</span>
+              <div className="flex gap-2">
+                <button onClick={cancelEdit} className="text-xs px-3 py-1 text-slate-400 hover:text-slate-200">
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEdit}
+                  disabled={isSaving || !editDraft.trim()}
+                  className="text-xs px-3 py-1 bg-brand-500 text-white rounded-full hover:bg-brand-600 disabled:opacity-50"
+                >
+                  {isSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+            {saveError && <p className="text-xs text-red-400">{saveError}</p>}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-200 mt-0.5 whitespace-pre-wrap leading-relaxed">
+            <Highlight text={displayContent} query="" />
+            {displayIsEdited && (
+              <span className="ml-1.5 text-[10px] text-slate-500 font-normal align-middle">Edited</span>
+            )}
+          </p>
+        )}
 
         {/* Action bar */}
         <div className="flex items-center gap-5 mt-2">
@@ -161,8 +238,8 @@ function ReplyCard({
           </div>
           <RepostButton postId={reply.id} initialCount={reply.repostCount ?? 0} />
 
-          {/* ··· delete menu */}
-          {canDelete && (
+          {/* ··· menu */}
+          {(canEdit || canDelete) && (
             <div className="ml-auto relative">
               {menuOpen && (
                 <div
@@ -179,12 +256,22 @@ function ReplyCard({
               </button>
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-1 bg-surface-800 border border-surface-700 rounded-lg shadow-xl z-50 overflow-hidden min-w-[100px]">
-                  <button
-                    onClick={() => { setMenuOpen(false); setDialogOpen(true); }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-surface-700 transition-colors"
-                  >
-                    Delete
-                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={startEdit}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-surface-700 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      onClick={() => { setMenuOpen(false); setDialogOpen(true); }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-surface-700 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -272,13 +359,12 @@ function ReplyCard({
   );
 }
 
-// ── PostActions: main post action bar + first-level reply panel ────────────
+// ── PostActions: like / reply / repost action bar ────────────────────────
 interface PostActionsProps {
   post: Post;
   repostTargetId: string;
   currentUserId?: string;
   currentUserRole?: string;
-  onDelete?: (id: string) => void;
 }
 
 export function PostActions({
@@ -286,7 +372,6 @@ export function PostActions({
   repostTargetId,
   currentUserId,
   currentUserRole,
-  onDelete,
 }: PostActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -297,16 +382,7 @@ export function PostActions({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Delete state
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
   const username = post.author?.username ?? "unknown";
-  const canDelete =
-    Boolean(currentUserId) &&
-    (post.userId === currentUserId || currentUserRole === "ADMIN");
 
   async function fetchReplies() {
     setLoadingReplies(true);
@@ -343,25 +419,6 @@ export function PostActions({
     }
   }
 
-  async function handleDelete() {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await api.delete(`/api/posts/${post.id}`);
-      setDialogOpen(false);
-      if (onDelete) {
-        onDelete(post.id);
-      } else {
-        router.refresh();
-      }
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete");
-      setDialogOpen(false);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
     <div>
       {/* Main post action row */}
@@ -387,40 +444,7 @@ export function PostActions({
           </button>
         </div>
         <RepostButton postId={repostTargetId} initialCount={post.repostCount ?? 0} />
-
-        {/* ··· delete menu */}
-        {canDelete && (
-          <div className="ml-auto relative">
-            {menuOpen && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setMenuOpen(false)}
-              />
-            )}
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="text-slate-500 hover:text-slate-300 transition-colors px-1 text-sm leading-none"
-              title="More"
-            >
-              ···
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-surface-800 border border-surface-700 rounded-lg shadow-xl z-50 overflow-hidden min-w-[100px]">
-                <button
-                  onClick={() => { setMenuOpen(false); setDialogOpen(true); }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-surface-700 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
-
-      {deleteError && (
-        <p className="text-xs text-red-400 mt-1">{deleteError}</p>
-      )}
 
       {/* First-level reply panel */}
       {open && (
@@ -483,15 +507,6 @@ export function PostActions({
         </div>
       )}
 
-      <ConfirmDialog
-        open={dialogOpen}
-        title="Delete Post"
-        message="This action cannot be undone. Are you sure you want to delete this post?"
-        confirmLabel="Delete"
-        loading={deleting}
-        onConfirm={handleDelete}
-        onCancel={() => setDialogOpen(false)}
-      />
     </div>
   );
 }

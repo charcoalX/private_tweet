@@ -297,6 +297,58 @@ export const postRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
+  // PATCH /api/posts/:id — edit content (author only)
+  app.patch<{ Params: { id: string } }>(
+    "/:id",
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const body = z
+        .object({ content: z.string().min(1).max(240) })
+        .safeParse(req.body);
+      if (!body.success) {
+        return reply.code(400).send({
+          error: "ValidationError",
+          message: body.error.issues[0]?.message ?? "Invalid input",
+          statusCode: 400,
+        });
+      }
+
+      const post = await app.prisma.post.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!post || post.deletedAt) {
+        return reply.code(404).send({
+          error: "NotFound",
+          message: "Post not found",
+          statusCode: 404,
+        });
+      }
+
+      if (post.userId !== req.user.sub) {
+        return reply.code(403).send({
+          error: "Forbidden",
+          message: "Not your post",
+          statusCode: 403,
+        });
+      }
+
+      const updated = await app.prisma.post.update({
+        where: { id: req.params.id },
+        data: { content: body.data.content.trim(), isEdited: true },
+      });
+
+      return reply.send({
+        data: {
+          id: updated.id,
+          content: updated.content,
+          isEdited: updated.isEdited,
+          updatedAt: updated.updatedAt.toISOString(),
+        },
+      });
+    }
+  );
+
   // DELETE /api/posts/:id — soft delete
   app.delete<{ Params: { id: string } }>(
     "/:id",
@@ -402,6 +454,8 @@ type PostWithRelations = {
   replyToId: string | null;
   repostOfId: string | null;
   createdAt: Date;
+  updatedAt: Date;
+  isEdited: boolean;
   deletedAt: Date | null;
   userId: string;
   author: { id: string; username: string; avatarUrl: string | null };
@@ -445,6 +499,8 @@ function formatPost(post: PostWithRelations, isLiked = false) {
     replyToId: post.replyToId,
     repostOfId: post.repostOfId,
     createdAt: post.createdAt.toISOString(),
+    updatedAt: post.updatedAt.toISOString(),
+    isEdited: post.isEdited,
     deletedAt: post.deletedAt?.toISOString() ?? null,
     likeCount: post._count.likes,
     replyCount: post._count.replies,
