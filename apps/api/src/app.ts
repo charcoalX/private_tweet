@@ -7,12 +7,14 @@ import cookie from "@fastify/cookie";
 import { dbPlugin } from "./plugins/db.js";
 import { redisPlugin } from "./plugins/redis.js";
 import { authPlugin } from "./plugins/auth.js";
+import { storagePlugin } from "./plugins/storage.js";
 
 import { authRoutes } from "./routes/auth.js";
 import { userRoutes } from "./routes/users.js";
 import { postRoutes } from "./routes/posts.js";
 import { adminRoutes } from "./routes/admin.js";
 import { notificationRoutes } from "./routes/notifications.js";
+import { uploadRoutes } from "./routes/uploads.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -53,6 +55,7 @@ export async function buildApp() {
   await app.register(dbPlugin);
   await app.register(redisPlugin);
   await app.register(authPlugin);
+  await app.register(storagePlugin);
 
   // ── Health check ─────────────────────────────────────────────────────────────
   app.get("/api/health", async () => ({ status: "ok" }));
@@ -63,6 +66,7 @@ export async function buildApp() {
   await app.register(postRoutes, { prefix: "/api/posts" });
   await app.register(adminRoutes, { prefix: "/api/admin" });
   await app.register(notificationRoutes, { prefix: "/api/notifications" });
+  await app.register(uploadRoutes, { prefix: "/api/uploads" });
 
   return app;
 }

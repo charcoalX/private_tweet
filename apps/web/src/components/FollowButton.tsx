@@ -37,8 +37,8 @@ export function FollowButton({ userId, initialIsFollowing }: FollowButtonProps) 
       disabled={loading}
       className={`text-sm font-medium border rounded-full px-4 py-1.5 transition-colors disabled:opacity-50 ${
         isFollowing
-          ? "border-gray-300 text-gray-700 hover:border-red-300 hover:text-red-600"
-          : "bg-blue-500 text-white border-transparent hover:bg-blue-600"
+          ? "border-surface-700 text-slate-300 hover:border-red-500/50 hover:text-red-400"
+          : "bg-brand-500 text-white border-transparent hover:bg-brand-600"
       }`}
     >
       {loading ? "…" : isFollowing ? "Following" : "Follow"}

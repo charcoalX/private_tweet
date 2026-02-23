@@ -32,12 +32,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-surface-900 px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-8">Sign in</h1>
+        <h1 className="text-2xl font-bold text-center mb-8 text-slate-100">Sign in</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="email">
+            <label className="block text-sm font-medium mb-1 text-slate-300" htmlFor="email">
               Email
             </label>
             <input
@@ -47,12 +47,12 @@ function LoginForm() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full bg-surface-800 border border-surface-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           <div>
             <label
-              className="block text-sm font-medium mb-1"
+              className="block text-sm font-medium mb-1 text-slate-300"
               htmlFor="password"
             >
               Password
@@ -64,11 +64,11 @@ function LoginForm() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full bg-surface-800 border border-surface-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-400 bg-red-900/30 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
@@ -80,9 +80,9 @@ function LoginForm() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-slate-400 mt-6">
           Have an invite code?{" "}
-          <Link href="/register" className="text-brand-600 hover:underline">
+          <Link href="/register" className="text-brand-400 hover:underline">
             Create account
           </Link>
         </p>

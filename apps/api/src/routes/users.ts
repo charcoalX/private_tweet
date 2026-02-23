@@ -131,10 +131,20 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
         },
         include: {
           author: { select: { id: true, username: true, avatarUrl: true } },
-          _count: { select: { likes: true, replies: true } },
+          _count: { select: { likes: true, replies: { where: { deletedAt: null } }, reposts: { where: { deletedAt: null } } } },
           repostOf: {
             include: {
               author: { select: { id: true, username: true, avatarUrl: true } },
+              repostOf: {
+                include: {
+                  author: { select: { id: true, username: true, avatarUrl: true } },
+                  repostOf: {
+                    include: {
+                      author: { select: { id: true, username: true, avatarUrl: true } },
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -155,6 +165,20 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
           : [];
       const likedSet = new Set(likedRows.map((r) => r.postId));
 
+      function serializeRepostOf(r: any): unknown {
+        if (!r) return null;
+        return {
+          id: r.id,
+          content: r.content,
+          mediaUrls: r.mediaUrls,
+          repostOfId: r.repostOfId,
+          createdAt: r.createdAt.toISOString(),
+          deletedAt: r.deletedAt?.toISOString() ?? null,
+          author: r.author,
+          repostOf: serializeRepostOf(r.repostOf),
+        };
+      }
+
       return reply.send({
         data: page.map((p) => ({
           id: p.id,
@@ -167,17 +191,10 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
           deletedAt: p.deletedAt?.toISOString() ?? null,
           likeCount: p._count.likes,
           replyCount: p._count.replies,
+          repostCount: p._count.reposts,
           isLiked: likedSet.has(p.id),
           author: p.author,
-          repostOf: p.repostOf
-            ? {
-                id: p.repostOf.id,
-                content: p.repostOf.content,
-                createdAt: p.repostOf.createdAt.toISOString(),
-                deletedAt: p.repostOf.deletedAt?.toISOString() ?? null,
-                author: p.repostOf.author,
-              }
-            : null,
+          repostOf: serializeRepostOf(p.repostOf),
         })),
         nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null,
         hasMore,

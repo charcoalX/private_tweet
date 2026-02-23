@@ -23,7 +23,7 @@ export function MarkAllReadButton() {
     <button
       onClick={markRead}
       disabled={loading}
-      className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+      className="text-sm text-brand-400 hover:text-brand-500 disabled:opacity-50"
     >
       {loading ? "…" : "Mark all read"}
     </button>

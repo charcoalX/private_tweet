@@ -42,18 +42,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div>
       {/* Profile header */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+      <div className="bg-surface-800 border border-surface-700 rounded-xl p-6 mb-6">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl uppercase flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-2xl uppercase flex-shrink-0">
             {user.username[0]}
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-xl">{user.username}</h1>
+            <h1 className="font-bold text-xl text-slate-100">{user.username}</h1>
             {user.bio && (
-              <p className="text-sm text-gray-600 mt-1">{user.bio}</p>
+              <p className="text-sm text-slate-400 mt-1">{user.bio}</p>
             )}
           </div>
 
@@ -67,16 +67,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
 
         {/* Stats */}
-        <div className="flex gap-6 mt-5 text-sm text-gray-500">
+        <div className="flex gap-6 mt-5 text-sm text-slate-400">
           <span>
-            <strong className="text-gray-900">{user.postCount}</strong> posts
+            <strong className="text-slate-100">{user.postCount}</strong> posts
           </span>
           <span>
-            <strong className="text-gray-900">{user.followerCount}</strong>{" "}
+            <strong className="text-slate-100">{user.followerCount}</strong>{" "}
             followers
           </span>
           <span>
-            <strong className="text-gray-900">{user.followingCount}</strong>{" "}
+            <strong className="text-slate-100">{user.followingCount}</strong>{" "}
             following
           </span>
         </div>
@@ -84,13 +84,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
       {/* Posts */}
       {posts.length === 0 ? (
-        <p className="text-center text-sm text-gray-400 py-12">
+        <p className="text-center text-sm text-slate-400 py-12">
           No posts yet.
         </p>
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard
+              key={post.id}
+              post={post}
+              currentUserId={currentUser?.sub}
+              currentUserRole={currentUser?.role}
+            />
           ))}
         </div>
       )}

@@ -52,7 +52,7 @@ export default async function NotificationsPage() {
         <div>
           <h1 className="text-xl font-bold">Notifications</h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-slate-400 mt-0.5">
               {unreadCount} unread
             </p>
           )}
@@ -61,21 +61,21 @@ export default async function NotificationsPage() {
       </div>
 
       {notifications.length === 0 ? (
-        <p className="text-center text-sm text-gray-400 py-12">
+        <p className="text-center text-sm text-slate-400 py-12">
           No notifications yet.
         </p>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+        <div className="bg-surface-800 border border-surface-700 rounded-xl divide-y divide-surface-700 overflow-hidden">
           {notifications.map((n) => (
             <div
               key={n.id}
               className={`flex items-start gap-3 p-4 transition-colors ${
-                !n.read ? "bg-blue-50 hover:bg-blue-100/60" : "hover:bg-gray-50"
+                !n.read ? "bg-brand-500/10 hover:bg-brand-500/15" : "hover:bg-surface-700/30"
               }`}
             >
               {/* Actor avatar */}
               <Link href={`/profile/${n.actor.username}`} className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm uppercase">
+                <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-semibold text-sm uppercase">
                   {n.actor.username[0]}
                 </div>
               </Link>
@@ -92,18 +92,18 @@ export default async function NotificationsPage() {
                   {actionText(n.type)}
                 </p>
                 {n.post && (
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                  <p className="text-xs text-slate-400 mt-0.5 truncate">
                     "{n.post.content}"
                   </p>
                 )}
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {timeAgo(n.createdAt)}
                 </p>
               </div>
 
               {/* Unread dot */}
               {!n.read && (
-                <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
+                <div className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0 mt-1.5" />
               )}
             </div>
           ))}

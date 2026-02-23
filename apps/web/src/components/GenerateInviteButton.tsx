@@ -32,12 +32,12 @@ export function GenerateInviteButton() {
       <button
         onClick={generate}
         disabled={loading}
-        className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+        className="bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
       >
         {loading ? "Generating…" : "Generate invite code"}
       </button>
       {lastCode && (
-        <span className="text-sm font-mono bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg">
+        <span className="text-sm font-mono bg-green-900/30 text-green-400 border border-green-700/50 px-3 py-1.5 rounded-lg">
           {lastCode}
         </span>
       )}

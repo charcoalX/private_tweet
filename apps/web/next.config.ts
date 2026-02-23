@@ -1,11 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  webpack(config) {
+    // pnpm on Windows creates symlinks that webpack resolves through two
+    // different path casings (Desktop vs desktop), loading the same module
+    // twice and breaking React's hook invariant.  Disabling symlink
+    // resolution forces all imports to use the symlink path consistently.
+    config.resolve.symlinks = false;
+    return config;
+  },
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.API_URL ?? "http://localhost:3001"}/api/:path*`,
+        destination: `${process.env.API_URL ?? "http://localhost:4000"}/api/:path*`,
       },
     ];
   },

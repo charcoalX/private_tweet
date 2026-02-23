@@ -21,9 +21,10 @@ export interface Post {
   // Aggregates optionally joined
   likeCount?: number;
   replyCount?: number;
+  repostCount?: number;
   isLiked?: boolean;
   author?: Pick<User, "id" | "username" | "avatarUrl">;
-  repostOf?: Pick<Post, "id" | "content" | "createdAt" | "deletedAt" | "author"> | null;
+  repostOf?: Pick<Post, "id" | "content" | "mediaUrls" | "repostOfId" | "createdAt" | "deletedAt" | "author" | "repostOf"> | null;
 }
 
 export interface Follow {

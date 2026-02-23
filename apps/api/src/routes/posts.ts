@@ -6,11 +6,15 @@ const createPostSchema = z
     content: z.string().max(240).default(""),
     replyToId: z.string().optional(),
     repostOfId: z.string().optional(),
+    mediaUrls: z.array(z.string().url()).max(4).optional(),
   })
-  .refine((data) => data.content.trim().length > 0 || Boolean(data.repostOfId), {
-    message: "Content is required",
-    path: ["content"],
-  });
+  .refine(
+    (data) =>
+      data.content.trim().length > 0 ||
+      Boolean(data.repostOfId) ||
+      (data.mediaUrls && data.mediaUrls.length > 0),
+    { message: "Content is required", path: ["content"] }
+  );
 
 export const postRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/posts/feed — following timeline (cursor-based)
@@ -39,10 +43,20 @@ export const postRoutes: FastifyPluginAsync = async (app) => {
           where: { id: { in: ids }, deletedAt: null, replyToId: null },
           include: {
             author: { select: { id: true, username: true, avatarUrl: true } },
-            _count: { select: { likes: true, replies: true } },
+            _count: { select: { likes: true, replies: { where: { deletedAt: null } }, reposts: { where: { deletedAt: null } } } },
             repostOf: {
               include: {
                 author: { select: { id: true, username: true, avatarUrl: true } },
+                repostOf: {
+                  include: {
+                    author: { select: { id: true, username: true, avatarUrl: true } },
+                    repostOf: {
+                      include: {
+                        author: { select: { id: true, username: true, avatarUrl: true } },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -76,10 +90,25 @@ export const postRoutes: FastifyPluginAsync = async (app) => {
         },
         include: {
           author: { select: { id: true, username: true, avatarUrl: true } },
-          _count: { select: { likes: true, replies: true } },
+          _count: { select: { likes: true, replies: { where: { deletedAt: null } }, reposts: { where: { deletedAt: null } } } },
           repostOf: {
             include: {
               author: { select: { id: true, username: true, avatarUrl: true } },
+              repostOf: {
+                include: {
+                  author: { select: { id: true, username: true, avatarUrl: true } },
+                  repostOf: {
+                    include: {
+                      author: { select: { id: true, username: true, avatarUrl: true } },
+                      repostOf: {
+                        include: {
+                          author: { select: { id: true, username: true, avatarUrl: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -112,20 +141,45 @@ export const postRoutes: FastifyPluginAsync = async (app) => {
         where: { id: req.params.id, deletedAt: null },
         include: {
           author: { select: { id: true, username: true, avatarUrl: true } },
-          _count: { select: { likes: true, replies: true } },
+          _count: { select: { likes: true, replies: { where: { deletedAt: null } }, reposts: { where: { deletedAt: null } } } },
           repostOf: {
             include: {
               author: { select: { id: true, username: true, avatarUrl: true } },
+              repostOf: {
+                include: {
+                  author: { select: { id: true, username: true, avatarUrl: true } },
+                  repostOf: {
+                    include: {
+                      author: { select: { id: true, username: true, avatarUrl: true } },
+                      repostOf: {
+                        include: {
+                          author: { select: { id: true, username: true, avatarUrl: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           replies: {
             where: { deletedAt: null },
             include: {
               author: { select: { id: true, username: true, avatarUrl: true } },
-              _count: { select: { likes: true, replies: true } },
+              _count: { select: { likes: true, replies: { where: { deletedAt: null } }, reposts: { where: { deletedAt: null } } } },
               repostOf: {
                 include: {
                   author: { select: { id: true, username: true, avatarUrl: true } },
+                  repostOf: {
+                    include: {
+                      author: { select: { id: true, username: true, avatarUrl: true } },
+                      repostOf: {
+                        include: {
+                          author: { select: { id: true, username: true, avatarUrl: true } },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -174,13 +228,29 @@ export const postRoutes: FastifyPluginAsync = async (app) => {
           content: body.data.content,
           replyToId: body.data.replyToId,
           repostOfId: body.data.repostOfId,
+          mediaUrls: body.data.mediaUrls ?? [],
         },
         include: {
           author: { select: { id: true, username: true, avatarUrl: true } },
-          _count: { select: { likes: true, replies: true } },
+          _count: { select: { likes: true, replies: { where: { deletedAt: null } }, reposts: { where: { deletedAt: null } } } },
           repostOf: {
             include: {
               author: { select: { id: true, username: true, avatarUrl: true } },
+              repostOf: {
+                include: {
+                  author: { select: { id: true, username: true, avatarUrl: true } },
+                  repostOf: {
+                    include: {
+                      author: { select: { id: true, username: true, avatarUrl: true } },
+                      repostOf: {
+                        include: {
+                          author: { select: { id: true, username: true, avatarUrl: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -314,6 +384,17 @@ export const postRoutes: FastifyPluginAsync = async (app) => {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+type RepostData = {
+  id: string;
+  content: string;
+  mediaUrls: string[];
+  repostOfId: string | null;
+  createdAt: Date;
+  deletedAt: Date | null;
+  author: { id: string; username: string; avatarUrl: string | null };
+  repostOf: RepostData | null;
+};
+
 type PostWithRelations = {
   id: string;
   content: string;
@@ -324,14 +405,8 @@ type PostWithRelations = {
   deletedAt: Date | null;
   userId: string;
   author: { id: string; username: string; avatarUrl: string | null };
-  _count: { likes: number; replies: number };
-  repostOf: {
-    id: string;
-    content: string;
-    createdAt: Date;
-    deletedAt: Date | null;
-    author: { id: string; username: string; avatarUrl: string | null };
-  } | null;
+  _count: { likes: number; replies: number; reposts: number };
+  repostOf: RepostData | null;
 };
 
 async function getLikedSet(
@@ -347,6 +422,20 @@ async function getLikedSet(
   return new Set(rows.map((r) => r.postId));
 }
 
+function serializeRepostOf(r: RepostData | null): unknown {
+  if (!r) return null;
+  return {
+    id: r.id,
+    content: r.content,
+    mediaUrls: r.mediaUrls,
+    repostOfId: r.repostOfId,
+    createdAt: r.createdAt.toISOString(),
+    deletedAt: r.deletedAt?.toISOString() ?? null,
+    author: r.author,
+    repostOf: serializeRepostOf(r.repostOf),
+  };
+}
+
 function formatPost(post: PostWithRelations, isLiked = false) {
   return {
     id: post.id,
@@ -359,16 +448,9 @@ function formatPost(post: PostWithRelations, isLiked = false) {
     deletedAt: post.deletedAt?.toISOString() ?? null,
     likeCount: post._count.likes,
     replyCount: post._count.replies,
+    repostCount: post._count.reposts,
     isLiked,
     author: post.author,
-    repostOf: post.repostOf
-      ? {
-          id: post.repostOf.id,
-          content: post.repostOf.content,
-          createdAt: post.repostOf.createdAt.toISOString(),
-          deletedAt: post.repostOf.deletedAt?.toISOString() ?? null,
-          author: post.repostOf.author,
-        }
-      : null,
+    repostOf: serializeRepostOf(post.repostOf),
   };
 }

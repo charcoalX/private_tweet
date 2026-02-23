@@ -7,9 +7,9 @@ export function BackButton() {
   return (
     <button
       onClick={() => router.back()}
-      className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+      className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
     >
-      ← 返回
+      ← Back
     </button>
   );
 }

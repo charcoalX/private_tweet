@@ -1,6 +1,6 @@
 const API_BASE =
   typeof window === "undefined"
-    ? (process.env.API_URL ?? "http://localhost:3001")
+    ? (process.env.API_URL ?? "http://localhost:4000")
     : ""; // browser uses relative /api/* via Next.js rewrites
 
 export class ApiError extends Error {

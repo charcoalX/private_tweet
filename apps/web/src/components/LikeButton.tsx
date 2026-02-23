@@ -41,7 +41,7 @@ export function LikeButton({ postId, initialLiked, initialCount }: LikeButtonPro
       className={`flex items-center gap-1.5 text-xs transition-colors disabled:opacity-50 ${
         liked
           ? "text-red-500 hover:text-red-400"
-          : "text-gray-400 hover:text-red-400"
+          : "text-brand-400 hover:text-red-400"
       }`}
     >
       <span className="text-base leading-none">{liked ? "♥" : "♡"}</span>

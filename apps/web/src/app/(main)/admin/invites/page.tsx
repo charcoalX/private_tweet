@@ -36,22 +36,22 @@ export default async function AdminInvitesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold">Invite codes</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-slate-400 mt-0.5">
             {available.length} available · {used.length} used
           </p>
         </div>
         <GenerateInviteButton />
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-surface-800 border border-surface-700 rounded-xl overflow-x-auto">
         {codes.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-12">
+          <p className="text-center text-sm text-slate-400 py-12">
             No invite codes yet.
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <tr className="border-b border-surface-700 bg-surface-900 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">
                 <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Created by</th>
                 <th className="px-4 py-3">Status</th>
@@ -59,33 +59,33 @@ export default async function AdminInvitesPage() {
                 <th className="px-4 py-3">Expires</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-surface-700">
               {codes.map((c) => (
-                <tr key={c.code} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono font-medium text-gray-800">
+                <tr key={c.code} className="hover:bg-surface-700/30 transition-colors">
+                  <td className="px-4 py-3 font-mono font-medium text-slate-200">
                     {c.code}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{c.createdBy}</td>
+                  <td className="px-4 py-3 text-slate-300">{c.createdBy}</td>
                   <td className="px-4 py-3">
                     {c.usedBy ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-700/50 text-slate-400">
                         Used
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400">
                         Available
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-slate-300">
                     {c.usedBy ?? "—"}
                     {c.usedAt && (
-                      <span className="text-gray-400 text-xs ml-1">
+                      <span className="text-slate-500 text-xs ml-1">
                         ({formatDate(c.usedAt)})
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-slate-400">
                     {formatDate(c.expiresAt)}
                   </td>
                 </tr>

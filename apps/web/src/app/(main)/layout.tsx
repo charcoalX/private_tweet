@@ -14,11 +14,11 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top navigation bar */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+      <header className="sticky top-0 z-50 bg-surface-800 border-b border-surface-700">
         <nav className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link
             href="/feed"
-            className="font-bold text-lg text-blue-600 hover:text-blue-700"
+            className="font-bold text-lg text-brand-400 hover:text-brand-500"
           >
             Private Tweet
           </Link>
@@ -26,14 +26,14 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
           <div className="flex items-center gap-4 text-sm">
             <Link
               href="/feed"
-              className="text-gray-600 hover:text-gray-900 font-medium"
+              className="text-slate-400 hover:text-slate-100 font-medium"
             >
               Feed
             </Link>
             {currentUser && (
               <Link
                 href={`/profile/${currentUser.username}`}
-                className="text-gray-600 hover:text-gray-900 font-medium"
+                className="text-slate-400 hover:text-slate-100 font-medium"
               >
                 {currentUser.username}
               </Link>
@@ -41,7 +41,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             {/* Notification bell */}
             <Link
               href="/notifications"
-              className="relative text-gray-600 hover:text-gray-900"
+              className="relative text-slate-400 hover:text-slate-100"
               title="Notifications"
             >
               <span className="text-lg leading-none">🔔</span>
@@ -55,7 +55,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             {currentUser?.role === "ADMIN" && (
               <Link
                 href="/admin/users"
-                className="text-gray-600 hover:text-gray-900 font-medium"
+                className="text-slate-400 hover:text-slate-100 font-medium"
               >
                 Admin
               </Link>

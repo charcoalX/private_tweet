@@ -57,8 +57,10 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const passwordHash = await argon2.hash(password);
 
     const user = await app.prisma.$transaction(async (tx) => {
+      // First user on the platform automatically becomes ADMIN
+      const adminCount = await tx.user.count({ where: { role: "ADMIN" } });
       const newUser = await tx.user.create({
-        data: { username, email, passwordHash },
+        data: { username, email, passwordHash, role: adminCount === 0 ? "ADMIN" : "USER" },
       });
       await tx.inviteCode.update({
         where: { code: inviteCode },

@@ -21,7 +21,7 @@ export default function RootLayout({
       <head>
         <meta name="robots" content="noindex,nofollow,noarchive" />
       </head>
-      <body className="bg-gray-50 text-gray-900 antialiased" suppressHydrationWarning>
+      <body className="bg-surface-900 text-slate-100 antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>
