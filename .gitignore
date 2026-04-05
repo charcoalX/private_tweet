@@ -31,6 +31,12 @@ pnpm-debug.log*
 
 # Claude Code local settings
 .claude/
+.md
+!README.md
+!CLAUDE.md
 
 # Docker
 docker-compose.override.yml
+
+# Private docs
+noneed_doc/
