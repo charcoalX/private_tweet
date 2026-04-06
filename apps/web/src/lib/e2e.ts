@@ -143,7 +143,7 @@ export async function loadPrivateKey(userId: string): Promise<CryptoKey | null> 
     if (!b64) return null;
     return await crypto.subtle.importKey(
       "pkcs8",
-      b642buf(b64).buffer,
+      b642buf(b64).buffer as ArrayBuffer,
       RSA_PARAMS,
       false,
       ["decrypt"]
@@ -182,8 +182,8 @@ export async function encryptMessage(
   plaintext: string
 ): Promise<string> {
   const [senderPubKey, recipientPubKey] = await Promise.all([
-    crypto.subtle.importKey("spki", b642buf(senderPublicKeyB64).buffer, RSA_PARAMS, false, ["encrypt"]),
-    crypto.subtle.importKey("spki", b642buf(recipientPublicKeyB64).buffer, RSA_PARAMS, false, ["encrypt"]),
+    crypto.subtle.importKey("spki", b642buf(senderPublicKeyB64).buffer as ArrayBuffer, RSA_PARAMS, false, ["encrypt"]),
+    crypto.subtle.importKey("spki", b642buf(recipientPublicKeyB64).buffer as ArrayBuffer, RSA_PARAMS, false, ["encrypt"]),
   ]);
 
   // Generate a one-time AES-256-GCM key for this message
