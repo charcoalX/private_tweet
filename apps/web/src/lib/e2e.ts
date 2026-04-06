@@ -38,13 +38,14 @@ function buf2b64(buf: ArrayBuffer | Uint8Array): string {
   return btoa(binary);
 }
 
-function b642buf(b64: string): Uint8Array {
+function b642buf(b64: string): Uint8Array<ArrayBuffer> {
   const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
+  const buf = new ArrayBuffer(binary.length);
+  const bytes = new Uint8Array(buf);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return bytes;
+  return bytes as Uint8Array<ArrayBuffer>;
 }
 
 // ── Shared init cache (prevents concurrent key generation on the same page) ────
