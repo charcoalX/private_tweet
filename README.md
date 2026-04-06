@@ -93,11 +93,22 @@ Key variables in `apps/api/.env`:
 | `MINIO_ACCESS_KEY` | `minioadmin` | MinIO access key |
 | `MINIO_SECRET_KEY` | `minioadmin` | MinIO secret key |
 
-**4. Run database migrations**
+**4. Run database migrations and seed**
 
 ```bash
 cd apps/api
 pnpm prisma migrate dev
+pnpm prisma db seed
+```
+
+The seed step prints a one-time bootstrap invite code, for example:
+
+```
+========================================
+  Bootstrap invite code created:
+  INIT-3A7F-C219
+  Register with this code to become ADMIN.
+========================================
 ```
 
 **5. Start the development servers**
@@ -109,7 +120,9 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-> The first user to register is automatically promoted to ADMIN. Create an invite code from the admin panel to invite others.
+> Register with the bootstrap invite code — the first user is automatically promoted to ADMIN. From the admin panel you can generate invite codes to share with others.
+>
+> The seed is idempotent: re-running it will print the existing unused code instead of creating a new one.
 
 ## API Overview
 
@@ -168,11 +181,14 @@ docker build -t private-tweet-web ./apps/web
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-Before the first run, apply migrations inside the container:
+Before the first run, apply migrations and seed the bootstrap invite code:
 
 ```bash
 docker exec <api-container> npx prisma migrate deploy --schema /app/apps/api/prisma/schema.prisma
+docker exec <api-container> npx prisma db seed --schema /app/apps/api/prisma/schema.prisma
 ```
+
+The seed command prints a bootstrap invite code to the terminal. Use it to register the first admin account.
 
 Recommended: place Nginx or Caddy in front for TLS termination, and set `HSTS`, `CSP`, and `SameSite` headers.
 

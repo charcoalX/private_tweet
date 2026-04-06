@@ -101,6 +101,8 @@ services:
         # API_URL is baked into Next.js rewrites at build time
         API_URL_BUILD: http://api:3001
     restart: always
+    ports:
+      - "3000:3000"
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
@@ -118,28 +120,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-
-  # ── Reverse proxy ──────────────────────────────────────────────────────────
-
-  nginx:
-    image: nginx:1.27-alpine
-    restart: always
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - app_net
-    depends_on:
-      api:
-        condition: service_healthy
-      web:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
 # ── Networking & Volumes ────────────────────────────────────────────────────
 
