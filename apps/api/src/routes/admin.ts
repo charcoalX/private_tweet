@@ -28,7 +28,7 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
       return reply.send({
         data: codes.map((c) => ({
           code: c.code,
-          createdBy: c.creator.username,
+          createdBy: c.creator?.username ?? null,
           usedBy: c.user?.username ?? null,
           usedAt: c.usedAt?.toISOString() ?? null,
           expiresAt: c.expiresAt?.toISOString() ?? null,
