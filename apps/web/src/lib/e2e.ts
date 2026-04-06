@@ -29,9 +29,9 @@ const RSA_PARAMS: RsaHashedKeyGenParams = {
   hash: "SHA-256",
 };
 
-function buf2b64(buf: ArrayBuffer): string {
+function buf2b64(buf: ArrayBuffer | Uint8Array): string {
   let binary = "";
-  const bytes = new Uint8Array(buf);
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
