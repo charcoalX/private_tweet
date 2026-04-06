@@ -10,13 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: SSH into GCE and deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USER }}
-          key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
-          script: |
+      - name: Decode SSH key and deploy
+        env:
+          GCE_SSH_KEY_B64: ${{ secrets.GCE_SSH_KEY_B64 }}
+          GCE_HOST: ${{ secrets.GCE_HOST }}
+          GCE_USER: ${{ secrets.GCE_USER }}
+        run: |
+          echo "$GCE_SSH_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no $GCE_USER@$GCE_HOST << 'ENDSSH'
             set -e
             cd ~/private_tweet
 
@@ -36,3 +38,4 @@ jobs:
               node_modules/.bin/tsx /app/apps/api/prisma/seed.ts
 
             echo "==> Deploy complete."
+          ENDSSH
